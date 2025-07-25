@@ -3,5 +3,5 @@ uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 Pillow==8.4.0
 opencv-python-headless==4.6.0.66
-numpy==1.21.6
+numpy==1.23.5
 mediapipe==0.8.11
