@@ -297,7 +297,9 @@ def analyze_face_shape_optimized(image_data):
                 "confidence": max(face_result["confidence"] - 15, 60),
                 "analysis_method": "opencv_fallback",
                 "measurements": measurements,
-                "reasoning": face_result["reasoning"]
+                "reasoning": face_result["reasoning"],
+                "coordinates": {},
+                "ratios": face_result.get("ratios", {})
             }
         
         # MediaPipe 처리
@@ -337,7 +339,9 @@ def analyze_face_shape_optimized(image_data):
                 "confidence": max(face_result["confidence"] - 10, 65),
                 "analysis_method": "safe_fallback",
                 "measurements": measurements,
-                "reasoning": face_result["reasoning"]
+                "reasoning": face_result["reasoning"],
+                "coordinates": {},
+                "ratios": face_result.get("ratios", {})
             }
             
     except Exception as e:
@@ -350,7 +354,9 @@ def analyze_face_shape_optimized(image_data):
             "confidence": 60,
             "analysis_method": "error_fallback",
             "measurements": measurements,
-            "reasoning": f"분석 오류로 인한 기본 분류: {e}"
+            "reasoning": f"분석 오류로 인한 기본 분류: {e}",
+            "coordinates": {},
+            "ratios": face_result.get("ratios", {})
         }
 
 @app.get("/")
