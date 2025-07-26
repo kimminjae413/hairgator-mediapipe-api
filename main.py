@@ -201,38 +201,38 @@ def classify_face_shape_perfect(FW, CW, FC, JW):
         ratio_forehead_cheek = FW / CW  # 이마폭/광대폭
         ratio_jaw_cheek = JW / CW      # 턱폭/광대폭
         
-        # GPT 검증된 분류 기준 (해부학적 근거)
+        # 조정된 분류 기준 (임계값 완화로 균형 개선)
         
-        # 1. 긴형 (Long/Oblong): 길이가 폭에 비해 매우 긴 경우
+        # 1. 긴형: 길이가 폭에 비해 매우 긴 경우 (기존 유지)
         if ratio_height_width > 1.6:
             confidence = min(94, 78 + int((ratio_height_width - 1.6) * 25))
             return "긴형", confidence, f"얼굴길이 비율 {ratio_height_width:.2f}로 긴형"
         
-        # 2. 하트형: 이마가 광대보다 넓고 턱이 좁음
-        elif ratio_forehead_cheek > 1.05 and ratio_jaw_cheek < 0.85:
-            confidence = min(94, 80 + int((ratio_forehead_cheek - 1.05) * 30))
+        # 2. 하트형: 이마가 넓고 턱이 좁음 (살짝 완화)
+        elif ratio_forehead_cheek > 1.02 and ratio_jaw_cheek < 0.87:
+            confidence = min(94, 80 + int((ratio_forehead_cheek - 1.02) * 30))
             return "하트형", confidence, f"이마가 넓고 턱이 좁은 하트형"
         
-        # 3. 각진형 (Square): 이마, 광대, 턱이 비슷하게 넓음
-        elif (0.90 <= ratio_forehead_cheek <= 1.05 and 
-              0.85 <= ratio_jaw_cheek <= 0.95 and
-              1.1 <= ratio_height_width <= 1.4):
-            confidence = min(94, 77 + int(abs(0.975 - ratio_forehead_cheek) * 20))
+        # 3. 각진형: 이마, 광대, 턱이 비슷하게 넓음 (완화)
+        elif (0.84 <= ratio_forehead_cheek <= 1.05 and 
+              0.82 <= ratio_jaw_cheek <= 0.96 and
+              1.1 <= ratio_height_width <= 1.45):
+            confidence = min(94, 77 + int(abs(0.94 - ratio_forehead_cheek) * 20))
             return "각진형", confidence, f"이마-광대-턱이 균등한 각진형"
         
-        # 4. 둥근형: 각진형과 비슷하지만 얼굴이 더 짧음
-        elif (0.88 <= ratio_forehead_cheek <= 1.05 and
-              0.83 <= ratio_jaw_cheek <= 0.95 and
-              1.0 <= ratio_height_width <= 1.25):
-            confidence = min(94, 79 + int(abs(1.125 - ratio_height_width) * 15))
+        # 4. 둥근형: 각진형과 비슷하지만 얼굴이 더 짧음 (완화)
+        elif (0.84 <= ratio_forehead_cheek <= 1.05 and
+              0.82 <= ratio_jaw_cheek <= 0.96 and
+              1.0 <= ratio_height_width <= 1.35):
+            confidence = min(94, 79 + int(abs(1.175 - ratio_height_width) * 15))
             return "둥근형", confidence, f"균형잡힌 둥근형"
         
-        # 5. 다이아몬드형: 광대가 가장 넓고 이마와 턱이 모두 좁음
-        elif ratio_forehead_cheek < 0.90 and ratio_jaw_cheek < 0.83:
-            confidence = min(94, 81 + int((0.90 - ratio_forehead_cheek) * 25))
+        # 5. 다이아몬드형: 광대가 가장 넓고 이마와 턱이 모두 좁음 (엄격화)
+        elif ratio_forehead_cheek < 0.84 and ratio_jaw_cheek < 0.80:
+            confidence = min(94, 81 + int((0.84 - ratio_forehead_cheek) * 25))
             return "다이아몬드형", confidence, f"광대가 가장 넓은 다이아몬드형"
         
-        # 6. 타원형: 광대가 가장 넓고 이마와 턱이 적당히 좁음 (가장 일반적)
+        # 6. 타원형: 나머지 (기본형)
         else:
             confidence = min(90, 74 + int(abs(1.3 - ratio_height_width) * 8))
             return "타원형", confidence, f"표준적인 타원형"
