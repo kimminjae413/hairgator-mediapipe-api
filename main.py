@@ -6,7 +6,7 @@ import os
 import math
 import traceback
 import sys
-from typing import Dict, Any, Optional
+from urllib.parse import quote
 
 # 기본 구조 완전 유지
 app = FastAPI(
@@ -187,7 +187,18 @@ async def get_auto_recommendations(face_shape: str, age_group: str = "1020대") 
                     files = style_data[face_shape][age_group]
                     
                     firebase_files = [file["filename"] for file in files]
-                    firebase_urls = [f"{FIREBASE_BASE_URL}{file}?alt=media" for file in firebase_files]
+                    
+                    # 🔥 수정된 URL 생성 (한글 파일명 URL 인코딩)
+                    firebase_urls = []
+                    for file in firebase_files:
+                        try:
+                            encoded_filename = quote(file, safe='')
+                            url = f"{FIREBASE_BASE_URL}{encoded_filename}?alt=media"
+                            firebase_urls.append(url)
+                            print(f"🔗 Firebase URL 생성: {file}")
+                        except Exception as e:
+                            print(f"❌ URL 생성 실패: {file} - {e}")
+                            firebase_urls.append(f"{FIREBASE_BASE_URL}default.jpg?alt=media")
                     
                     # 스타일 설명 생성
                     style_descriptions = {
@@ -790,6 +801,69 @@ async def manual_refresh_cache():
             "status": "error",
             "message": f"캐시 갱신 실패: {str(e)}"
         }
+
+@app.get("/test-firebase/{filename}")
+async def test_firebase_file(filename: str):
+    """🔍 Firebase 파일 접근 테스트"""
+    try:
+        encoded_filename = quote(filename, safe='')
+        test_url = f"{FIREBASE_BASE_URL}{encoded_filename}?alt=media"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(test_url) as response:
+                return {
+                    "filename": filename,
+                    "encoded_filename": encoded_filename,
+                    "test_url": test_url,
+                    "status_code": response.status,
+                    "accessible": response.status == 200,
+                    "content_type": response.headers.get("content-type", "unknown"),
+                    "file_exists": response.status != 404
+                }
+                
+    except Exception as e:
+        return {
+            "filename": filename,
+            "error": str(e),
+            "accessible": False
+        }
+
+@app.get("/test-direct-firebase")
+async def test_direct_firebase():
+    """🔍 Firebase 직접 URL 테스트"""
+    test_files = [
+        "001_클래식보브_둥근형_1020대_v1.jpg.jpg",
+        "037_소프트보브_둥근형_1020대_v1.jpg.jpg", 
+        "073_C컬단발_둥근형_1020대_v1.jpg.jpg"
+    ]
+    
+    results = []
+    
+    for filename in test_files:
+        try:
+            encoded_filename = quote(filename, safe='')
+            test_url = f"{FIREBASE_BASE_URL}{encoded_filename}?alt=media"
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(test_url) as response:
+                    results.append({
+                        "filename": filename,
+                        "status": response.status,
+                        "accessible": response.status == 200,
+                        "url": test_url
+                    })
+                    
+        except Exception as e:
+            results.append({
+                "filename": filename,
+                "error": str(e),
+                "accessible": False
+            })
+    
+    return {
+        "test_results": results,
+        "base_url": FIREBASE_BASE_URL
+    }
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
